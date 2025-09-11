@@ -5,6 +5,7 @@ import time
 import csv
 import threading
 
+
 def headers_get():
     return {
         "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
@@ -22,6 +23,7 @@ def headers_get():
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
     }
 
+
 def headers_post(urlEvento: str):
     return {
         'accept': '*/*',
@@ -38,6 +40,7 @@ def headers_post(urlEvento: str):
         'sec-fetch-site': 'same-origin',
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36',
     }
+
 
 def fetch_prices(tls_session: tls_client.Session, event_url: str, page_visit_id: str, category_id: str):
     
@@ -92,45 +95,59 @@ def fetch_prices(tls_session: tls_client.Session, event_url: str, page_visit_id:
     return response
 
 
+def fetch_event_page(tls_session: tls_client.Session, event_url: str):
 
+    headers = headers_get()
 
+    response = tls_session.get(
+        event_url,
+        headers=headers,
+    )
 
-DEFAULT_DEFAULT_DELAY = 8  # Tiempo de espera por defecto entre peticiones
-BANNED = False
-BANNED_SLEEP_TIME = 40  # Tiempo de espera si somos baneados
+    if response.status_code == 302:
+        printRed(f'Error al obtener la página, verifique que la url es correcta: {event_url}')
+        raise RuntimeError(response.status_code)
+
+    elif response.status_code != 200:
+        raise RuntimeError(f"Error al obtener la página del evento: {response.status_code}")
+    
+    else:
+        return response.text
+
 
 
 def main(urlEvento, precioMaximo, discordWebhook):
 
+    
+    default_delay = 8  # Tiempo de espera por defecto entre peticiones
+    banned = False
+    banned_sleep_time = 40  # Tiempo de espera si somos baneados
+
+
     session = tls_client.Session()
 
-    headers = headers_get()
+    response_text = fetch_event_page(tls_session=session, event_url=urlEvento)
 
-    response = session.get(
-        urlEvento,
-        headers=headers,
-    )
-
-    pageVisitId = response.text.split('"pageVisitId":"')[1].split('",')[0]
-    categoryId = response.text.split('"categoryId":')[1].split(',')[0]
-    titulo = response.text.split('title>')[1].split('<')[0]
+    pageVisitId = response_text.split('"pageVisitId":"')[1].split('",')[0]
+    categoryId = response_text.split('"categoryId":')[1].split(',')[0]
+    titulo = response_text.split('title>')[1].split('<')[0]
 
     printAzul(f'Comenzando a monitorizar {titulo}')
 
     while True:
         try:
 
-            response = fetch_prices(session=session,event_url=urlEvento, page_visit_id=pageVisitId, category_id=categoryId)
+            response = fetch_prices(tls_session=session,event_url=urlEvento, page_visit_id=pageVisitId, category_id=categoryId)
 
             if response.status_code != 200:
                 printRed('Error al obtener la página del producto')
                 print(response.status_code)
-                BANNED = True
-                time.sleep(BANNED_SLEEP_TIME)
+                banned = True
+                time.sleep(banned_sleep_time)
 
-                DEFAULT_DELAY += 1 # Vamos aumentando para hallar el DEFAULT_DELAY perfecto donde no banee
+                default_delay += 1 # Vamos aumentando para hallar el default_delay perfecto donde no banee
 
-            if BANNED == False:
+            if banned == False:
 
                 data = response.json()
                 section_data = data.get("sectionPopupData", {})
@@ -175,7 +192,7 @@ def main(urlEvento, precioMaximo, discordWebhook):
                     
                 else:
                     printHora(f'No se encontraron entradas por debajo de {precioMaximo}€ para {titulo}')
-                    time.sleep(DEFAULT_DELAY) # Tiempo de espera entre peticiones para evitar rate limit
+                    time.sleep(default_delay) # Tiempo de espera entre peticiones para evitar rate limit
 
         except Exception as e:
             print("Error en la solicitud:", e)
