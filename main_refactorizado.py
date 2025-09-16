@@ -42,14 +42,40 @@ def headers_post(urlEvento: str):
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36',
     }
 
-def challenge_handler(event_url: str):
+# Abrimos el evento con seleniumBase para obtener las cookies necesarias para el antibot
+def challenge_handler(event_url_challenge: str, tls_session_challenge: tls_client.Session):
     
     with SB(uc=True) as sb:
 
-        sb.activate_cdp_mode(event_url)
+        sb.activate_cdp_mode(event_url_challenge)
+        sb.wait_for_ready_state_complete(timeout=5)
+        cookies_selenium = sb.get_cookies()
 
-        return sb.get_page_source()
+        for c in cookies_selenium:
+            name = c.get("name")
+            value = c.get("value", "")
+            domain = c.get("domain") or None
+            path = c.get("path", "/")
+            if name is None:
+                continue
+            if c.get("expiry") is not None:
+                try:
+                    import time as _time
+                    if int(c["expiry"]) < int(_time.time()):
+                        continue
+                except Exception:
+                    pass
+            tls_session_challenge.cookies.set(name, value, domain=domain, path=path)
 
+    # Volvemos a hacer la petición con las cookies requeridas
+    headers = headers_get()
+
+    response = tls_session_challenge.get(
+        event_url_challenge,
+        headers=headers,
+    )
+
+    return response.text
 
 
 def fetch_prices(tls_session: tls_client.Session, event_url: str, page_visit_id: str, category_id: str):
@@ -119,7 +145,7 @@ def fetch_event_page(tls_session: tls_client.Session, event_url: str):
         raise RuntimeError(response.status_code)
 
     elif response.status_code == 202:
-        return challenge_handler(event_url=event_url)
+        return challenge_handler(event_url_challenge=event_url, tls_session_challenge=tls_session)
     
     else:
         return response.text
@@ -128,11 +154,9 @@ def fetch_event_page(tls_session: tls_client.Session, event_url: str):
 
 def main(urlEvento, precioMaximo, discordWebhook):
 
-    
     default_delay = 8  # Tiempo de espera por defecto entre peticiones
     banned = False
     banned_sleep_time = 40  # Tiempo de espera si somos baneados
-
 
     session = tls_client.Session()
 
