@@ -1,6 +1,7 @@
 import tls_client
 from printColor import printRed, printVerde, printHora, printAzul, printMagenta, printYellow
 from WebhookOk import notification_viagogo
+from seleniumbase import SB
 import time
 import csv
 import threading
@@ -41,6 +42,14 @@ def headers_post(urlEvento: str):
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36',
     }
 
+def challenge_handler(event_url: str):
+    
+    with SB(uc=True) as sb:
+        print(event_url)
+        sb.activate_cdp_mode('https://www.viagogo.com/Concert-Tickets/Rap-and-Hip-Hop-Music/Bad-Bunny-Tickets/E-158171526?quantity=2')
+        sb.wait_for_element("input#i0116", timeout=50)
+        print('a')
+
 
 def fetch_prices(tls_session: tls_client.Session, event_url: str, page_visit_id: str, category_id: str):
     
@@ -54,7 +63,7 @@ def fetch_prices(tls_session: tls_client.Session, event_url: str, page_visit_id:
     json_data = {
         'ShowAllTickets': True,
         'HideDuplicateTicketsV2': False,
-        'Quantity': 0,
+        'Quantity': int(event_url.split('quantity=')[1]),
         'IsInitialQuantityChange': False,
         'PageVisitId': page_visit_id,
         'PageSize': 20,
@@ -108,8 +117,8 @@ def fetch_event_page(tls_session: tls_client.Session, event_url: str):
         printRed(f'Error al obtener la página, verifique que la url es correcta: {event_url}')
         raise RuntimeError(response.status_code)
 
-    elif response.status_code != 200:
-        raise RuntimeError(f"Error al obtener la página del evento: {response.status_code}")
+    elif response.status_code == 202:
+        challenge_handler(event_url=event_url)
     
     else:
         return response.text
@@ -199,7 +208,7 @@ def main(urlEvento, precioMaximo, discordWebhook):
             time.sleep(180) # Si da error haciendo la peticion le metemos un tiempo de espera
 
 
-def leer_csv_y_ejecutar_hilos(archivo_csv):
+def leer_csv_y_ejecutar_threads(archivo_csv):
     hilos = []
 
     with open(archivo_csv, mode='r', newline='') as file:
@@ -215,4 +224,4 @@ def leer_csv_y_ejecutar_hilos(archivo_csv):
             time.sleep(2) # Asi hacemos que no arranquen todas las peticiones al mismo tiempo
 
 
-leer_csv_y_ejecutar_hilos('data.csv')
+leer_csv_y_ejecutar_threads('data.csv')
