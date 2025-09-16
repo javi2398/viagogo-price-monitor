@@ -45,10 +45,11 @@ def headers_post(urlEvento: str):
 def challenge_handler(event_url: str):
     
     with SB(uc=True) as sb:
-        print(event_url)
-        sb.activate_cdp_mode('https://www.viagogo.com/Concert-Tickets/Rap-and-Hip-Hop-Music/Bad-Bunny-Tickets/E-158171526?quantity=2')
-        sb.wait_for_element("input#i0116", timeout=50)
-        print('a')
+
+        sb.activate_cdp_mode(event_url)
+
+        return sb.get_page_source()
+
 
 
 def fetch_prices(tls_session: tls_client.Session, event_url: str, page_visit_id: str, category_id: str):
@@ -118,7 +119,7 @@ def fetch_event_page(tls_session: tls_client.Session, event_url: str):
         raise RuntimeError(response.status_code)
 
     elif response.status_code == 202:
-        challenge_handler(event_url=event_url)
+        return challenge_handler(event_url=event_url)
     
     else:
         return response.text
