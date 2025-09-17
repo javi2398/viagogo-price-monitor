@@ -66,25 +66,25 @@ source .venv/bin/activate
 # Instalar dependencias
 pip install -U pip
 pip install tls_client seleniumbase
-
+```
 
 
 
 ## Explicación detallada de data.csv
 
-El archivo **`data.csv`** define **qué eventos** se monitorizan, **con qué umbral de precio**, y **a qué webhook** se envían las alertas. Debe ser **CSV válido con cabecera**.
+El archivo **data.csv** define **qué eventos** se monitorizan, **con qué umbral de precio**, y **a qué webhook** se envían las alertas. Debe ser **CSV válido con cabecera**.
 
 ### 📌 Columnas obligatorias
 
 | Columna         | Tipo   | Obligatoria | Descripción                                                                                          |
 |-----------------|--------|-------------|------------------------------------------------------------------------------------------------------|
 | `enlace`        | texto  | ✅          | URL **completa** del evento en Viagogo. **Debe incluir** `?quantity=<n>`.                           |
-| `precioMax`     | entero | ✅          | Umbral **por entrada** en euros. Se notifica si `precio_encontrado < precioMax`.                     |
+| `precioMax`     | entero | ✅          | Umbral **por entrada**. Se notifica si `precio_encontrado < precioMax`.                     |
 | `discordWebhook`| texto  | ✅          | URL del webhook de Discord donde recibirás el embed con la oferta.                                   |
 
 Se recomienda extraer los enlaces de 'https://www.viagogo.com/' puesto que marcan el precio más ajustado a las fees respecto a sus otros dominios.
 ### ✅ Ejemplo mínimo correcto
 
-```csv
+```csv ejemplo
 enlace,precioMax,discordWebhook
 https://www.viagogo.com/Concert-Tickets/Rap-and-Hip-Hop-Music/Bad-Bunny-Tickets/E-158171526?quantity=2,150,https://discord.com/api/webhooks/XXXXXXXX/AAAAAAAA
