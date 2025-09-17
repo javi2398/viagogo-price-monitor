@@ -203,13 +203,13 @@ def main(urlEvento, precioMaximo, discordWebhook):
                         headers=headers,
                     )
 
-                    listingId = response.text.split('items"')[1].split('"id":')[1].split(',')[0]
-                    eventId = response.text.split('items"')[1].split('"eventId":')[1].split(',')[0]
-                    ticketQuantity = response.text.split('items"')[1].split('"availableTickets":')[1].split(',')[0]
+                    listingId = response.text.split('items"')[1].split('"id":')[2].split(',')[0]
+                    eventId = response.text.split('items"')[1].split('"id":')[2].split('"eventId":')[1].split(',')[0]
+                    ticketQuantity = response.text.split('items"')[1].split('"id":')[2].split('"availableTickets":')[1].split(',')[0]
                     urlcheckout = f'https://www.viagogo.com/secure/buy/Initialise?ListingID={listingId}&EventID={eventId}&quantity={ticketQuantity}'
-                    section = response.text.split('items"')[1].split('"section":"')[1].split('",')[0]
-                    row = response.text.split('items"')[1].split('"row":"')[1].split('",')[0]
-                    seat = response.text.split('items"')[1].split('"seat":"')[1].split('",')[0]
+                    section = response.text.split('items"')[1].split('"id":')[2].split('"section":"')[1].split('",')[0]
+                    row = response.text.split('items"')[1].split('"id":')[2].split('"row":"')[1].split('",')[0]
+                    seat = response.text.split('items"')[1].split('"id":')[2].split('"seat":"')[1].split('",')[0]
                     infoSeat = f'SEC: {section}, ROW: {row}, SEAT: {seat}, QTY: {ticketQuantity}'
                     imagen = 'https://media.stubhubstatic.com/stubhub-v2-catalog' + response.text.split('stubhub-v2-catalog')[1].split('" />')[0]
 
