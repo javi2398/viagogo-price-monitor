@@ -13,7 +13,7 @@ def headers_get():
         "accept-language": "es-419,es;q=0.9",
         "dnt": "1",
         "priority": "u=0, i",
-        "sec-ch-ua": '"Chromium";v="130", "Google Chrome";v="130", "Not?A_Brand";v="99"',
+        "sec-ch-ua": '"Chromium";v="139", "Google Chrome";v="130", "Not?A_Brand";v="99"',
         "sec-ch-ua-mobile": "?0",
         "sec-ch-ua-platform": '"Windows"',
         "sec-fetch-dest": "document",
@@ -33,7 +33,7 @@ def headers_post(urlEvento: str):
         'origin': 'https://www.viagogo.com',
         'priority': 'u=1, i',
         'referer': urlEvento,
-        'sec-ch-ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"',
+        'sec-ch-ua': '"Not;A=Brand";v="99", "Google Chrome";v="130", "Chromium";v="139"',
         'sec-ch-ua-mobile': '?0',
         'sec-ch-ua-platform': '"Windows"',
         'sec-fetch-dest': 'empty',
@@ -45,10 +45,12 @@ def headers_post(urlEvento: str):
 # Abrimos el evento con seleniumBase para obtener las cookies necesarias para el antibot
 def challenge_handler(event_url_challenge: str, tls_session_challenge: tls_client.Session):
     
-    with SB(uc=True) as sb:
+    with SB(uc=True, headless=True) as sb:
 
-        sb.activate_cdp_mode(event_url_challenge)
-        sb.wait_for_ready_state_complete(timeout=5)
+        printAzul('Obteniendo cookies con SeleniumBase...')
+        sb.uc_open(event_url_challenge)
+        sb.wait_for_ready_state_complete(timeout=30)
+
         cookies_selenium = sb.get_cookies()
 
         for c in cookies_selenium:
