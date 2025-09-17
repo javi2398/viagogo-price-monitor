@@ -203,6 +203,7 @@ def main(urlEvento, precioMaximo, discordWebhook):
                         headers=headers,
                     )
 
+                    # El primer listing aparece como '-' lo cual significa que no hay entradas disponibles, debemos tomar el segundo
                     listingId = response.text.split('items"')[1].split('"id":')[2].split(',')[0]
                     eventId = response.text.split('items"')[1].split('"id":')[2].split('"eventId":')[1].split(',')[0]
                     ticketQuantity = response.text.split('items"')[1].split('"id":')[2].split('"availableTickets":')[1].split(',')[0]
